@@ -33,3 +33,10 @@
 - [x] Error handling (generation failure toast)
 - [x] Vitest tests for generateCharacter procedure
 - [x] Final checkpoint
+
+## Randomize Feature
+- [x] Add randomize logic (random name generator + random field picker) for Mega Man Boss mode
+- [x] Add randomize logic for Custom Pokémon mode
+- [x] Add "Randomize" button with dice icon to both forms
+- [x] Animate form fields when randomized (flash/highlight effect)
+- [x] Update tests to cover randomize output validity

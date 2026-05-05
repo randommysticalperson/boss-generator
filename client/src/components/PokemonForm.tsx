@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Shuffle } from "lucide-react";
+import { randomizePokemon } from "@/lib/randomizer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,9 +46,21 @@ export default function PokemonForm({ onGenerate, isLoading }: Props) {
     size: "medium",
     evolutionStage: "basic",
   });
+  const [isRandomizing, setIsRandomizing] = useState(false);
 
   const set = (key: keyof PokemonFormData, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleRandomize = useCallback(() => {
+    setIsRandomizing(true);
+    const randomData = randomizePokemon();
+    setForm({
+      ...randomData,
+      type2: randomData.type2 ?? "",
+      move2: randomData.move2 ?? "",
+    });
+    setTimeout(() => setIsRandomizing(false), 600);
+  }, []);
 
   const isValid = form.name && form.type1 && form.region && form.ability && form.move1 && form.personality;
 
@@ -63,6 +76,50 @@ export default function PokemonForm({ onGenerate, isLoading }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Randomize button */}
+      <motion.div custom={-1} variants={fieldVariants} initial="hidden" animate="visible">
+        <button
+          type="button"
+          onClick={handleRandomize}
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 disabled:opacity-40"
+          style={{
+            background: "oklch(0.18 0.02 260)",
+            border: "1px solid oklch(0.28 0.03 260)",
+            color: "oklch(0.70 0.24 295)",
+          }}
+        >
+          <motion.div
+            animate={isRandomizing ? { rotate: 360 } : { rotate: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            <Shuffle className="w-4 h-4" />
+          </motion.div>
+          <span>Randomize Pokémon</span>
+          <AnimatePresence>
+            {isRandomizing && (
+              <motion.span
+                key="flash"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-xs"
+                style={{ color: "oklch(0.70 0.24 295)" }}
+              >
+                ✦
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+      </motion.div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px" style={{ background: "oklch(0.22 0.02 260)" }} />
+        <span className="text-xs text-muted-foreground">or fill manually</span>
+        <div className="flex-1 h-px" style={{ background: "oklch(0.22 0.02 260)" }} />
+      </div>
+
       {/* Name */}
       <motion.div custom={0} variants={fieldVariants} initial="hidden" animate="visible">
         <Label className="text-sm font-medium text-muted-foreground mb-1.5 block">
