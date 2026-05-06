@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Shuffle } from "lucide-react";
 import { randomizePokemon } from "@/lib/randomizer";
@@ -30,10 +30,12 @@ const fieldVariants = {
 
 interface Props {
   onGenerate: (data: PokemonFormData) => void;
+  onFormChange?: (data: PokemonFormData) => void;
+  onAddToQueue?: () => void;
   isLoading: boolean;
 }
 
-export default function PokemonForm({ onGenerate, isLoading }: Props) {
+export default function PokemonForm({ onGenerate, onFormChange, onAddToQueue, isLoading }: Props) {
   const [form, setForm] = useState<PokemonFormData>({
     name: "",
     type1: "",
@@ -50,6 +52,10 @@ export default function PokemonForm({ onGenerate, isLoading }: Props) {
 
   const set = (key: keyof PokemonFormData, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  useEffect(() => {
+    onFormChange?.(form);
+  }, [form, onFormChange]);
 
   const handleRandomize = useCallback(() => {
     setIsRandomizing(true);
@@ -304,12 +310,12 @@ export default function PokemonForm({ onGenerate, isLoading }: Props) {
         </div>
       </motion.div>
 
-      {/* Generate Button */}
-      <motion.div custom={7} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2">
+      {/* Generate + Queue Buttons */}
+      <motion.div custom={7} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2 flex gap-2">
         <Button
           type="submit"
           disabled={!isValid || isLoading}
-          className="w-full h-12 rounded-xl text-base font-bold transition-all duration-300 disabled:opacity-40"
+          className="flex-1 h-12 rounded-xl text-base font-bold transition-all duration-300 disabled:opacity-40"
           style={{
             background: isValid && !isLoading
               ? "linear-gradient(135deg, oklch(0.60 0.24 295), oklch(0.70 0.20 160))"
@@ -320,8 +326,25 @@ export default function PokemonForm({ onGenerate, isLoading }: Props) {
           }}
         >
           <Sparkles className="w-4 h-4 mr-2" />
-          {isLoading ? "Generating..." : "Generate Pokémon"}
+          {isLoading ? "Generating..." : "Generate"}
         </Button>
+        {onAddToQueue && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!isValid || isLoading}
+            onClick={onAddToQueue}
+            className="h-12 px-4 rounded-xl font-semibold transition-all duration-200 disabled:opacity-40"
+            style={{
+              background: "oklch(0.14 0.015 260)",
+              border: "1px solid oklch(0.28 0.03 260)",
+              color: "oklch(0.60 0.24 295)",
+            }}
+            title="Add to queue"
+          >
+            + Queue
+          </Button>
+        )}
       </motion.div>
     </form>
   );

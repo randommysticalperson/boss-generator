@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -88,10 +88,12 @@ const fieldVariants = {
 
 interface Props {
   onGenerate: (data: MegamanXFormData) => void;
+  onFormChange?: (data: MegamanXFormData) => void;
+  onAddToQueue?: () => void;
   isLoading: boolean;
 }
 
-export default function MegamanXForm({ onGenerate, isLoading }: Props) {
+export default function MegamanXForm({ onGenerate, onFormChange, onAddToQueue, isLoading }: Props) {
   const [form, setForm] = useState<MegamanXFormData>({
     name: "",
     animalBase: "",
@@ -109,6 +111,10 @@ export default function MegamanXForm({ onGenerate, isLoading }: Props) {
 
   const set = (key: keyof MegamanXFormData, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  useEffect(() => {
+    onFormChange?.(form);
+  }, [form, onFormChange]);
 
   const handleRandomize = useCallback(() => {
     setIsRandomizing(true);
@@ -386,12 +392,12 @@ export default function MegamanXForm({ onGenerate, isLoading }: Props) {
         </Select>
       </motion.div>
 
-      {/* Generate Button */}
-      <motion.div custom={9} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2">
+      {/* Generate + Queue Buttons */}
+      <motion.div custom={9} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2 flex gap-2">
         <Button
           type="submit"
           disabled={!isValid || isLoading}
-          className="w-full h-12 rounded-xl text-base font-bold transition-all duration-300 disabled:opacity-40"
+          className="flex-1 h-12 rounded-xl text-base font-bold transition-all duration-300 disabled:opacity-40"
           style={{
             background:
               isValid && !isLoading
@@ -404,8 +410,25 @@ export default function MegamanXForm({ onGenerate, isLoading }: Props) {
           }}
         >
           <Zap className="w-4 h-4 mr-2" />
-          {isLoading ? "Generating..." : "Generate Maverick"}
+          {isLoading ? "Generating..." : "Generate"}
         </Button>
+        {onAddToQueue && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!isValid || isLoading}
+            onClick={onAddToQueue}
+            className="h-12 px-4 rounded-xl font-semibold transition-all duration-200 disabled:opacity-40"
+            style={{
+              background: "oklch(0.14 0.015 260)",
+              border: "1px solid oklch(0.28 0.03 260)",
+              color: "oklch(0.72 0.22 185)",
+            }}
+            title="Add to queue"
+          >
+            + Queue
+          </Button>
+        )}
       </motion.div>
     </form>
   );

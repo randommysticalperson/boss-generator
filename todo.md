@@ -50,3 +50,14 @@
 - [x] Wire MegamanXForm into Home page with correct generate handler
 - [x] Write vitest tests for MegamanX randomizer (3 new tests, 23 total passing)
 - [x] Save checkpoint
+
+## Generation Queue Feature
+- [x] Create useGenerationQueue hook with queue state (pending, processing, completed, failed)
+- [x] Build QueuePanel UI component with job cards and status badges
+- [x] Add "+ Queue" button alongside the Generate button in all three forms
+- [x] Implement sequential queue processing (one job at a time)
+- [x] Show active job's loading overlay and auto-display result in preview panel on completion
+- [x] Allow removing pending jobs from the queue
+- [x] Persist completed queue items linked to history gallery
+- [x] Write vitest tests for queue hook logic (15 new tests, 44 total passing)
+- [x] Save checkpoint
