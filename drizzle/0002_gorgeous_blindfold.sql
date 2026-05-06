@@ -1,0 +1,1 @@
+ALTER TABLE `generations` MODIFY COLUMN `mode` enum('megaman','pokemon','megamanx') NOT NULL;

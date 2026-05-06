@@ -18,7 +18,7 @@ export type InsertUser = typeof users.$inferInsert;
 export const generations = mysqlTable("generations", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId"),
-  mode: mysqlEnum("mode", ["megaman", "pokemon"]).notNull(),
+  mode: mysqlEnum("mode", ["megaman", "pokemon", "megamanx"]).notNull(),
   characterName: varchar("characterName", { length: 128 }).notNull(),
   prompt: text("prompt").notNull(),
   imageUrl: text("imageUrl").notNull(),

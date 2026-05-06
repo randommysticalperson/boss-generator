@@ -40,3 +40,13 @@
 - [x] Add "Randomize" button with dice icon to both forms
 - [x] Animate form fields when randomized (flash/highlight effect)
 - [x] Update tests to cover randomize output validity
+
+## Mega Man X Mode
+- [x] Create MegamanXForm component with X-specific fields (Maverick name, animal base, element, armor upgrades, charged shot, dash type, personality, threat level, rivalry)
+- [x] Add randomizer logic for Mega Man X mode in randomizer.ts
+- [x] Add "Mega Man X" tab to the mode selector in Home.tsx
+- [x] Update backend router to build X-series styled prompt for megamanx mode
+- [x] Update DB schema/type to allow "megamanx" as a valid mode value
+- [x] Wire MegamanXForm into Home page with correct generate handler
+- [x] Write vitest tests for MegamanX randomizer (3 new tests, 23 total passing)
+- [x] Save checkpoint

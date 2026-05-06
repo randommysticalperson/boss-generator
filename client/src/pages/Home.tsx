@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import MegamanForm, { MegamanFormData } from "@/components/MegamanForm";
+import MegamanXForm, { MegamanXFormData } from "@/components/MegamanXForm";
 import PokemonForm, { PokemonFormData } from "@/components/PokemonForm";
 import PreviewPanel from "@/components/PreviewPanel";
 import HistoryGallery from "@/components/HistoryGallery";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { Zap, Sparkles } from "lucide-react";
 
-type Mode = "megaman" | "pokemon";
+type Mode = "megaman" | "megamanx" | "pokemon";
 
 interface GenerationResult {
   imageUrl: string;
@@ -17,6 +18,40 @@ interface GenerationResult {
   characterName: string;
   mode: Mode;
 }
+
+const MODE_CONFIG: Record<Mode, {
+  label: string;
+  icon: string;
+  accent: string;
+  barGradient: string;
+  title: string;
+  placeholder: string;
+}> = {
+  megaman: {
+    label: "Mega Man Boss",
+    icon: "⚡",
+    accent: "oklch(0.65 0.22 250)",
+    barGradient: "linear-gradient(180deg, oklch(0.65 0.22 250), oklch(0.55 0.22 220))",
+    title: "Boss Configuration",
+    placeholder: "e.g. glowing red eyes, dramatic storm background, battle-worn armor...",
+  },
+  megamanx: {
+    label: "Mega Man X",
+    icon: "🔵",
+    accent: "oklch(0.72 0.22 185)",
+    barGradient: "linear-gradient(180deg, oklch(0.72 0.22 185), oklch(0.60 0.22 220))",
+    title: "Maverick Design",
+    placeholder: "e.g. glowing X buster, neon city background, battle-damaged armor, dramatic lighting...",
+  },
+  pokemon: {
+    label: "Custom Pokémon",
+    icon: "✨",
+    accent: "oklch(0.60 0.24 295)",
+    barGradient: "linear-gradient(180deg, oklch(0.60 0.24 295), oklch(0.70 0.20 160))",
+    title: "Pokémon Design",
+    placeholder: "e.g. bioluminescent markings, ancient ruins background, mystical aura...",
+  },
+};
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("megaman");
@@ -32,9 +67,17 @@ export default function Home() {
       utils.generator.getHistory.invalidate();
       toast.success("Boss generated successfully!");
     },
-    onError: (err) => {
-      toast.error(`Generation failed: ${err.message}`);
+    onError: (err) => toast.error(`Generation failed: ${err.message}`),
+    onSettled: () => setIsGenerating(false),
+  });
+
+  const generateMegamanX = trpc.generator.generateMegamanX.useMutation({
+    onSuccess: (data) => {
+      setResult({ ...data, mode: "megamanx" });
+      utils.generator.getHistory.invalidate();
+      toast.success("Maverick generated successfully!");
     },
+    onError: (err) => toast.error(`Generation failed: ${err.message}`),
     onSettled: () => setIsGenerating(false),
   });
 
@@ -44,9 +87,7 @@ export default function Home() {
       utils.generator.getHistory.invalidate();
       toast.success("Pokémon generated successfully!");
     },
-    onError: (err) => {
-      toast.error(`Generation failed: ${err.message}`);
-    },
+    onError: (err) => toast.error(`Generation failed: ${err.message}`),
     onSettled: () => setIsGenerating(false),
   });
 
@@ -55,21 +96,40 @@ export default function Home() {
     generateMegaman.mutate({ form: formData, extraPrompt });
   }, [extraPrompt, generateMegaman]);
 
+  const handleMegamanXGenerate = useCallback((formData: MegamanXFormData) => {
+    setIsGenerating(true);
+    generateMegamanX.mutate({ form: formData, extraPrompt });
+  }, [extraPrompt, generateMegamanX]);
+
   const handlePokemonGenerate = useCallback((formData: PokemonFormData) => {
     setIsGenerating(true);
     generatePokemon.mutate({ form: formData, extraPrompt });
   }, [extraPrompt, generatePokemon]);
 
+  const cfg = MODE_CONFIG[mode];
+
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, oklch(0.65 0.22 250), transparent 70%)" }} />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, oklch(0.60 0.24 295), transparent 70%)" }} />
+        <motion.div
+          key={`bg1-${mode}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.10 }}
+          transition={{ duration: 0.8 }}
+          className="absolute -top-40 -right-40 w-96 h-96 rounded-full"
+          style={{ background: `radial-gradient(circle, ${cfg.accent}, transparent 70%)` }}
+        />
+        <motion.div
+          key={`bg2-${mode}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.10 }}
+          transition={{ duration: 0.8 }}
+          className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full"
+          style={{ background: `radial-gradient(circle, ${cfg.accent}, transparent 70%)` }}
+        />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-5"
-          style={{ background: "radial-gradient(circle, oklch(0.65 0.22 250), transparent 60%)" }} />
+          style={{ background: `radial-gradient(circle, ${cfg.accent}, transparent 60%)` }} />
       </div>
 
       {/* Header */}
@@ -79,7 +139,7 @@ export default function Home() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center glow-primary"
-                style={{ background: "linear-gradient(135deg, oklch(0.65 0.22 250), oklch(0.60 0.24 295))" }}>
+                style={{ background: `linear-gradient(135deg, ${cfg.accent}, oklch(0.60 0.24 295))` }}>
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -110,7 +170,7 @@ export default function Home() {
             Create Your Legend
           </h2>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-            Design a fearsome Mega Man boss or a unique Pokémon — brought to life by AI.
+            Design a fearsome Mega Man boss, a sleek X-series Maverick, or a unique Pokémon — brought to life by AI.
           </p>
         </motion.div>
 
@@ -122,23 +182,25 @@ export default function Home() {
           className="flex justify-center mb-8"
         >
           <div className="glass-card rounded-2xl p-1.5 flex gap-1 shadow-xl">
-            {(["megaman", "pokemon"] as Mode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`relative px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                  mode === m
-                    ? "text-primary-foreground shadow-lg"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                style={mode === m ? {
-                  background: "linear-gradient(135deg, oklch(0.65 0.22 250), oklch(0.60 0.24 295))",
-                  boxShadow: "0 4px 20px oklch(0.65 0.22 250 / 0.4)",
-                } : {}}
-              >
-                {m === "megaman" ? "⚡ Mega Man Boss" : "✨ Custom Pokémon"}
-              </button>
-            ))}
+            {(["megaman", "megamanx", "pokemon"] as Mode[]).map((m) => {
+              const c = MODE_CONFIG[m];
+              const isActive = mode === m;
+              return (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                    isActive ? "text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  style={isActive ? {
+                    background: `linear-gradient(135deg, ${c.accent}, oklch(0.55 0.22 220))`,
+                    boxShadow: `0 4px 20px ${c.accent.replace(")", " / 0.4)")}`,
+                  } : {}}
+                >
+                  {c.icon} {c.label}
+                </button>
+              );
+            })}
           </div>
         </motion.div>
 
@@ -153,21 +215,24 @@ export default function Home() {
           >
             <div className="glass-card rounded-2xl p-6 shadow-2xl h-full">
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-2 h-6 rounded-full"
-                  style={{ background: mode === "megaman"
-                    ? "linear-gradient(180deg, oklch(0.65 0.22 250), oklch(0.55 0.22 220))"
-                    : "linear-gradient(180deg, oklch(0.60 0.24 295), oklch(0.70 0.20 160))" }} />
+                <div className="w-2 h-6 rounded-full" style={{ background: cfg.barGradient }} />
                 <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  {mode === "megaman" ? "Boss Configuration" : "Pokémon Design"}
+                  {cfg.title}
                 </h3>
               </div>
 
               <AnimatePresence mode="wait">
-                {mode === "megaman" ? (
+                {mode === "megaman" && (
                   <motion.div key="megaman" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <MegamanForm onGenerate={handleMegamanGenerate} isLoading={isGenerating} />
                   </motion.div>
-                ) : (
+                )}
+                {mode === "megamanx" && (
+                  <motion.div key="megamanx" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <MegamanXForm onGenerate={handleMegamanXGenerate} isLoading={isGenerating} />
+                  </motion.div>
+                )}
+                {mode === "pokemon" && (
                   <motion.div key="pokemon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <PokemonForm onGenerate={handlePokemonGenerate} isLoading={isGenerating} />
                   </motion.div>
@@ -183,9 +248,7 @@ export default function Home() {
                 <textarea
                   value={extraPrompt}
                   onChange={(e) => setExtraPrompt(e.target.value)}
-                  placeholder={mode === "megaman"
-                    ? "e.g. glowing red eyes, dramatic storm background, battle-worn armor..."
-                    : "e.g. bioluminescent markings, ancient ruins background, mystical aura..."}
+                  placeholder={cfg.placeholder}
                   maxLength={500}
                   rows={3}
                   className="w-full rounded-xl px-4 py-3 text-sm resize-none transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"

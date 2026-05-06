@@ -89,6 +89,79 @@ describe("generator.generateMegaman", () => {
   });
 });
 
+describe("generator.generateMegamanX", () => {
+  it("returns imageUrl, prompt, and characterName on success", async () => {
+    const caller = appRouter.createCaller(createPublicCtx());
+    const result = await caller.generator.generateMegamanX({
+      form: {
+        name: "Storm Eagle",
+        animalBase: "Eagle",
+        element: "Wind",
+        armorColor: "Blue",
+        secondaryColor: "White",
+        chargedShot: "Wind blade cyclone",
+        dashType: "Air dash (horizontal)",
+        armorUpgrade: "Falcon Armor",
+        personality: "Honorable warrior",
+        threatLevel: "high",
+        rivalry: "X (Mega Man X)",
+      },
+      extraPrompt: "dramatic sky background",
+    });
+
+    expect(result.characterName).toBe("Storm Eagle");
+    expect(result.imageUrl).toBe("https://example.com/test-image.png");
+    expect(result.prompt).toContain("Storm Eagle");
+    expect(result.prompt).toContain("Eagle");
+    expect(result.prompt).toContain("Wind");
+    expect(result.prompt).toContain("Mega Man X");
+  });
+
+  it("includes charged shot, dash type, and threat level in prompt", async () => {
+    const caller = appRouter.createCaller(createPublicCtx());
+    const result = await caller.generator.generateMegamanX({
+      form: {
+        name: "Chill Penguin",
+        animalBase: "Penguin",
+        element: "Ice",
+        armorColor: "Cyan",
+        secondaryColor: "White",
+        chargedShot: "Ice crystal shards",
+        dashType: "Ground dash only",
+        personality: "Coldly logical",
+        threatLevel: "medium",
+      },
+      extraPrompt: "",
+    });
+
+    expect(result.prompt).toContain("Ice crystal shards");
+    expect(result.prompt).toContain("Ground dash only");
+    expect(result.prompt).toContain("medium");
+    expect(result.prompt).toContain("Chill Penguin");
+  });
+
+  it("omits armor upgrade line when not provided", async () => {
+    const caller = appRouter.createCaller(createPublicCtx());
+    const result = await caller.generator.generateMegamanX({
+      form: {
+        name: "Vile Mk-II",
+        animalBase: "Wolf",
+        element: "Shadow",
+        armorColor: "Purple",
+        secondaryColor: "Black",
+        chargedShot: "Shadow clone shot",
+        dashType: "Teleport dash",
+        personality: "Sadistic predator",
+        threatLevel: "sigma-class",
+      },
+      extraPrompt: "",
+    });
+
+    expect(result.prompt).not.toContain("Equipped with");
+    expect(result.prompt).toContain("sigma-class");
+  });
+});
+
 describe("generator.generatePokemon", () => {
   it("returns imageUrl, prompt, and characterName on success", async () => {
     const caller = appRouter.createCaller(createPublicCtx());

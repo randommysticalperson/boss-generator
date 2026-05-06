@@ -2,20 +2,51 @@ import { motion } from "framer-motion";
 import { Download, ImageIcon, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+type Mode = "megaman" | "megamanx" | "pokemon";
+
 interface GenerationResult {
   imageUrl: string;
   prompt: string;
   characterName: string;
-  mode: "megaman" | "pokemon";
+  mode: Mode;
 }
 
 interface Props {
   result: GenerationResult | null;
   isGenerating: boolean;
-  mode: "megaman" | "pokemon";
+  mode: Mode;
 }
 
+const MODE_BADGE: Record<Mode, { label: string; bg: string; color: string; border: string }> = {
+  megaman: {
+    label: "⚡ Boss",
+    bg: "oklch(0.65 0.22 250 / 0.15)",
+    color: "oklch(0.75 0.22 250)",
+    border: "oklch(0.65 0.22 250 / 0.3)",
+  },
+  megamanx: {
+    label: "🔵 Maverick",
+    bg: "oklch(0.72 0.22 185 / 0.15)",
+    color: "oklch(0.72 0.22 185)",
+    border: "oklch(0.72 0.22 185 / 0.3)",
+  },
+  pokemon: {
+    label: "✨ Pokémon",
+    bg: "oklch(0.60 0.24 295 / 0.15)",
+    color: "oklch(0.70 0.24 295)",
+    border: "oklch(0.60 0.24 295 / 0.3)",
+  },
+};
+
+const EMPTY_LABEL: Record<Mode, string> = {
+  megaman: "Mega Man boss",
+  megamanx: "X-series Maverick",
+  pokemon: "custom Pokémon",
+};
+
 export default function PreviewPanel({ result, isGenerating, mode }: Props) {
+  const badge = MODE_BADGE[mode];
+
   const handleDownload = async () => {
     if (!result?.imageUrl) return;
     try {
@@ -30,7 +61,6 @@ export default function PreviewPanel({ result, isGenerating, mode }: Props) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // fallback: open in new tab
       window.open(result.imageUrl, "_blank");
     }
   };
@@ -46,15 +76,11 @@ export default function PreviewPanel({ result, isGenerating, mode }: Props) {
         {result && (
           <span className="ml-auto text-xs px-2.5 py-1 rounded-full font-medium"
             style={{
-              background: mode === "megaman"
-                ? "oklch(0.65 0.22 250 / 0.15)"
-                : "oklch(0.60 0.24 295 / 0.15)",
-              color: mode === "megaman"
-                ? "oklch(0.75 0.22 250)"
-                : "oklch(0.70 0.24 295)",
-              border: `1px solid ${mode === "megaman" ? "oklch(0.65 0.22 250 / 0.3)" : "oklch(0.60 0.24 295 / 0.3)"}`,
+              background: badge.bg,
+              color: badge.color,
+              border: `1px solid ${badge.border}`,
             }}>
-            {mode === "megaman" ? "⚡ Boss" : "✨ Pokémon"}
+            {badge.label}
           </span>
         )}
       </div>
@@ -92,8 +118,7 @@ export default function PreviewPanel({ result, isGenerating, mode }: Props) {
               <div>
                 <p className="text-foreground font-semibold mb-1">No character yet</p>
                 <p className="text-muted-foreground text-sm">
-                  Fill in the form and click Generate to create your{" "}
-                  {mode === "megaman" ? "Mega Man boss" : "custom Pokémon"}
+                  Fill in the form and click Generate to create your {EMPTY_LABEL[mode]}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

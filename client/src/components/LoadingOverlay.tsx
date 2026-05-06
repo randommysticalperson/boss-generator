@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 
+type Mode = "megaman" | "megamanx" | "pokemon";
+
 interface Props {
-  mode: "megaman" | "pokemon";
+  mode: Mode;
 }
 
 const megamanMessages = [
@@ -12,6 +14,15 @@ const megamanMessages = [
   "Charging special weapon...",
 ];
 
+const megamanXMessages = [
+  "Activating Maverick protocols...",
+  "Fusing animal DNA with reploid tech...",
+  "Charging X-Buster to maximum...",
+  "Uploading combat algorithms...",
+  "Initializing Maverick Hunter threat...",
+  "Calibrating dash systems...",
+];
+
 const pokemonMessages = [
   "Consulting the Pokédex...",
   "Weaving elemental energy...",
@@ -20,13 +31,40 @@ const pokemonMessages = [
   "Awakening hidden ability...",
 ];
 
-export default function LoadingOverlay({ mode }: Props) {
-  const messages = mode === "megaman" ? megamanMessages : pokemonMessages;
-  const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+const MODE_CONFIG: Record<Mode, {
+  messages: string[];
+  primaryColor: string;
+  secondaryColor: string;
+  icon: string;
+  label: string;
+}> = {
+  megaman: {
+    messages: megamanMessages,
+    primaryColor: "oklch(0.65 0.22 250)",
+    secondaryColor: "oklch(0.55 0.22 220)",
+    icon: "⚡",
+    label: "Creating Boss...",
+  },
+  megamanx: {
+    messages: megamanXMessages,
+    primaryColor: "oklch(0.72 0.22 185)",
+    secondaryColor: "oklch(0.60 0.22 220)",
+    icon: "🔵",
+    label: "Creating Maverick...",
+  },
+  pokemon: {
+    messages: pokemonMessages,
+    primaryColor: "oklch(0.60 0.24 295)",
+    secondaryColor: "oklch(0.70 0.20 160)",
+    icon: "✨",
+    label: "Creating Pokémon...",
+  },
+};
 
-  const isMegaman = mode === "megaman";
-  const primaryColor = isMegaman ? "oklch(0.65 0.22 250)" : "oklch(0.60 0.24 295)";
-  const secondaryColor = isMegaman ? "oklch(0.55 0.22 220)" : "oklch(0.70 0.20 160)";
+export default function LoadingOverlay({ mode }: Props) {
+  const cfg = MODE_CONFIG[mode];
+  const randomMessage = cfg.messages[Math.floor(Math.random() * cfg.messages.length)];
+  const { primaryColor, secondaryColor } = cfg;
 
   return (
     <motion.div
@@ -71,7 +109,7 @@ export default function LoadingOverlay({ mode }: Props) {
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
           >
-            {isMegaman ? "⚡" : "✨"}
+            {cfg.icon}
           </motion.div>
         </div>
 
@@ -89,7 +127,7 @@ export default function LoadingOverlay({ mode }: Props) {
 
         <div className="text-center">
           <p className="text-foreground font-bold text-lg mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            {isMegaman ? "Creating Boss..." : "Creating Pokémon..."}
+            {cfg.label}
           </p>
           <motion.p
             key={randomMessage}

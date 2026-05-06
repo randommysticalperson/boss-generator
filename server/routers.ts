@@ -19,6 +19,21 @@ const megamanFormSchema = z.object({
   specialAbility: z.string().optional(),
 });
 
+// ── Mega Man X (Maverick) form schema ────────────────────────────────────────
+const megamanXFormSchema = z.object({
+  name: z.string().min(1).max(64),
+  animalBase: z.string().min(1),
+  element: z.string().min(1),
+  armorColor: z.string().min(1),
+  secondaryColor: z.string().min(1),
+  chargedShot: z.string().min(1),
+  dashType: z.string().min(1),
+  armorUpgrade: z.string().optional(),
+  personality: z.string().min(1),
+  threatLevel: z.enum(["low", "medium", "high", "sigma-class"]),
+  rivalry: z.string().optional(),
+});
+
 // ── Pokémon form schema ────────────────────────────────────────────────────────
 const pokemonFormSchema = z.object({
   name: z.string().min(1).max(64),
@@ -44,6 +59,25 @@ function buildMegamanPrompt(form: z.infer<typeof megamanFormSchema>, extraPrompt
     form.specialAbility ? `Special ability: ${form.specialAbility}.` : "",
     "Classic Mega Man NES/SNES art style, vibrant colors, robot humanoid design, helmet with visor, dynamic action pose.",
     "Clean pixel-art inspired illustration, bold outlines, dramatic lighting.",
+    extraPrompt ? `Additional details: ${extraPrompt}` : "",
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
+function buildMegamanXPrompt(form: z.infer<typeof megamanXFormSchema>, extraPrompt: string): string {
+  const parts = [
+    `A Mega Man X series Maverick boss named "${form.name}".`,
+    `Based on a ${form.animalBase}, with ${form.element} elemental powers.`,
+    `Armor is primarily ${form.armorColor} with ${form.secondaryColor} highlights.`,
+    `Special weapon: ${form.chargedShot}.`,
+    `Movement ability: ${form.dashType}.`,
+    form.armorUpgrade && form.armorUpgrade !== "None (unarmored)" ? `Equipped with ${form.armorUpgrade}.` : "",
+    `Personality: ${form.personality}.`,
+    `Threat level: ${form.threatLevel}.`,
+    form.rivalry ? `Nemesis/rival: ${form.rivalry}.` : "",
+    "Mega Man X SNES/PS1 art style. Sleek futuristic robot design fused with animal features.",
+    "Dynamic action pose, glowing energy effects, detailed mechanical armor plating, dramatic lighting.",
+    "Vibrant colors, bold outlines, high-detail character illustration.",
     extraPrompt ? `Additional details: ${extraPrompt}` : "",
   ];
   return parts.filter(Boolean).join(" ");
@@ -93,6 +127,29 @@ export const appRouter = router({
         await saveGeneration({
           userId: ctx.user?.id,
           mode: "megaman",
+          characterName: input.form.name,
+          prompt: fullPrompt,
+          imageUrl,
+          formData: JSON.stringify(input.form),
+        });
+
+        return { imageUrl, prompt: fullPrompt, characterName: input.form.name };
+      }),
+
+    generateMegamanX: publicProcedure
+      .input(z.object({
+        form: megamanXFormSchema,
+        extraPrompt: z.string().max(500).default(""),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const fullPrompt = buildMegamanXPrompt(input.form, input.extraPrompt);
+        const { url: imageUrlRaw } = await generateImage({ prompt: fullPrompt });
+        if (!imageUrlRaw) throw new Error("Image generation failed");
+        const imageUrl = imageUrlRaw;
+
+        await saveGeneration({
+          userId: ctx.user?.id,
+          mode: "megamanx",
           characterName: input.form.name,
           prompt: fullPrompt,
           imageUrl,

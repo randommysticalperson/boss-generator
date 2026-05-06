@@ -155,3 +155,88 @@ export function randomizePokemon(): PokemonFormData {
     evolutionStage: pick([...PKM_EVO_STAGES]),
   };
 }
+
+// ── Mega Man X name parts ──────────────────────────────────────────────────────
+import type { MegamanXFormData } from "@/components/MegamanXForm";
+
+const MMX_ADJECTIVES = [
+  "Storm", "Chill", "Flame", "Spark", "Gravity", "Sting", "Launch", "Armored",
+  "Boomer", "Wheel", "Bubble", "Crush", "Neon", "Volt", "Blaze", "Crystal",
+  "Toxic", "Slash", "Magna", "Tunnel", "Frost", "Cyber", "Dark", "Hyper",
+  "Acid", "Prism", "Shadow", "Omega", "Vile", "Sigma",
+];
+
+const MMX_ANIMALS = [
+  "Eagle", "Penguin", "Mammoth", "Chameleon", "Armadillo", "Hornet",
+  "Octopus", "Shark", "Falcon", "Rhino", "Crab", "Moth", "Beetle",
+  "Mantis", "Scorpion", "Bat", "Panther", "Cobra", "Wolf", "Tiger",
+  "Alligator", "Stingray", "Gorilla", "Crow", "Dragonfly", "Squid",
+];
+
+const MMX_ELEMENTS = [
+  "Fire", "Ice", "Electric", "Wind", "Earth", "Water", "Shadow", "Light",
+  "Gravity", "Crystal", "Magma", "Plasma", "Acid", "Void", "Cyber", "Toxic",
+];
+
+const MMX_COLORS = [
+  "Red", "Blue", "Green", "Yellow", "Purple", "Orange", "Cyan", "Gold",
+  "Silver", "Black", "White", "Pink", "Teal", "Crimson", "Indigo", "Violet",
+];
+
+const MMX_CHARGED_SHOTS = [
+  "Homing missiles", "Spread fire burst", "Charged plasma beam",
+  "Ice crystal shards", "Thunder wave ring", "Gravity well orb",
+  "Flame pillar strike", "Void energy lance", "Acid rain volley",
+  "Crystal spike barrage", "Wind blade cyclone", "Shadow clone shot",
+  "Magma eruption blast", "Cyber virus bolt", "Toxic cloud bomb",
+  "Sonic boom slash", "Laser ricochet", "Seismic ground pound",
+];
+
+const MMX_DASH_TYPES = [
+  "Air dash (horizontal)", "Air dash (any direction)", "Double air dash",
+  "Ground dash only", "Teleport dash", "Drill dash through walls",
+  "Flame trail dash", "Ice freeze dash", "Gravity flip dash",
+  "Shadow step dash", "Hyper speed burst", "Charge-cancel dash",
+];
+
+const MMX_ARMOR_UPGRADES = [
+  "Fourth Armor (Ultimate)", "Giga Armor", "Shadow Armor", "Falcon Armor",
+  "Blade Armor", "Neutral Armor", "Glitch Armor", "Dark Armor",
+  "Stealth Armor", "Siege Armor", "Prism Armor", "None (unarmored)",
+];
+
+const MMX_PERSONALITIES = [
+  "Loyal-turned-Maverick", "Coldly logical", "Berserker rage",
+  "Honorable warrior", "Sadistic predator", "Melancholic rebel",
+  "Fanatical zealot", "Cunning strategist", "Nihilistic destroyer",
+  "Proud and arrogant", "Reluctant villain", "Chaotic anarchist",
+];
+
+const MMX_RIVALRIES = [
+  "X (Mega Man X)", "Zero", "Axl", "Sigma", "Vile", "Iris",
+  "Colonel", "Gate", "Lumine", "Dynamo", "Alia", "Layer",
+];
+
+const MMX_THREAT_LEVELS = ["low", "medium", "high", "sigma-class"] as const;
+
+export function randomizeMegamanX(): MegamanXFormData {
+  const adjective = pick(MMX_ADJECTIVES);
+  const animal = pick(MMX_ANIMALS);
+  const [armorColor, secondaryColor] = pickTwo(MMX_COLORS);
+  const hasArmor = Math.random() > 0.4;
+  const hasRivalry = Math.random() > 0.4;
+
+  return {
+    name: `${adjective} ${animal}`,
+    animalBase: pick(MMX_ANIMALS),
+    element: pick(MMX_ELEMENTS),
+    armorColor,
+    secondaryColor,
+    chargedShot: pick(MMX_CHARGED_SHOTS),
+    dashType: pick(MMX_DASH_TYPES),
+    armorUpgrade: hasArmor ? pick(MMX_ARMOR_UPGRADES.filter((a) => a !== "None (unarmored)")) : "",
+    personality: pick(MMX_PERSONALITIES),
+    threatLevel: pick([...MMX_THREAT_LEVELS]),
+    rivalry: hasRivalry ? pick(MMX_RIVALRIES) : undefined,
+  };
+}
