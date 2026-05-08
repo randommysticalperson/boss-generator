@@ -1,13 +1,35 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import { Clock, ChevronDown, ChevronUp, X, Download } from "lucide-react";
 
+type FilterMode = "all" | "megaman" | "megamanx" | "pokemon";
+
+const FILTER_TABS: { key: FilterMode; label: string; icon: string; accent: string }[] = [
+  { key: "all",      label: "All",          icon: "◈",  accent: "oklch(0.75 0.18 50)" },
+  { key: "megaman",  label: "Boss",         icon: "⚡", accent: "oklch(0.65 0.22 250)" },
+  { key: "megamanx", label: "Maverick",     icon: "🔵", accent: "oklch(0.72 0.22 185)" },
+  { key: "pokemon",  label: "Pokémon",      icon: "✨", accent: "oklch(0.60 0.24 295)" },
+];
+
+const MODE_BADGE: Record<string, { icon: string; label: string; accent: string }> = {
+  megaman:  { icon: "⚡", label: "Boss",     accent: "oklch(0.65 0.22 250)" },
+  megamanx: { icon: "🔵", label: "Maverick", accent: "oklch(0.72 0.22 185)" },
+  pokemon:  { icon: "✨", label: "Pokémon",  accent: "oklch(0.60 0.24 295)" },
+};
+
 export default function HistoryGallery() {
   const [expanded, setExpanded] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
+  const [filter, setFilter] = useState<FilterMode>("all");
 
-  const { data: history, isLoading } = trpc.generator.getHistory.useQuery({ limit: 20 });
+  const { data: history, isLoading } = trpc.generator.getHistory.useQuery({ limit: 50 });
+
+  const filtered = useMemo(() => {
+    if (!history) return [];
+    if (filter === "all") return history;
+    return history.filter((item) => item.mode === filter);
+  }, [history, filter]);
 
   const handleDownload = async (imageUrl: string, name: string) => {
     try {
@@ -25,6 +47,17 @@ export default function HistoryGallery() {
       window.open(imageUrl, "_blank");
     }
   };
+
+  // Counts per mode for filter badges
+  const counts = useMemo(() => {
+    if (!history) return { all: 0, megaman: 0, megamanx: 0, pokemon: 0 };
+    return {
+      all: history.length,
+      megaman: history.filter((i) => i.mode === "megaman").length,
+      megamanx: history.filter((i) => i.mode === "megamanx").length,
+      pokemon: history.filter((i) => i.mode === "pokemon").length,
+    };
+  }, [history]);
 
   if (!isLoading && (!history || history.length === 0)) {
     return (
@@ -47,7 +80,7 @@ export default function HistoryGallery() {
     );
   }
 
-  const selectedItem = selected !== null ? history?.[selected] : null;
+  const selectedItem = selected !== null ? filtered[selected] : null;
 
   return (
     <div className="glass-card rounded-2xl shadow-2xl overflow-hidden">
@@ -85,6 +118,50 @@ export default function HistoryGallery() {
             className="overflow-hidden"
           >
             <div className="px-6 pb-6">
+              {/* Mode filter tabs */}
+              {!isLoading && history && history.length > 0 && (
+                <div className="flex items-center gap-1.5 mb-5 flex-wrap">
+                  {FILTER_TABS.map((tab) => {
+                    const count = counts[tab.key];
+                    const isActive = filter === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={(e) => { e.stopPropagation(); setFilter(tab.key); setSelected(null); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200"
+                        style={isActive ? {
+                          background: `${tab.accent.replace(")", " / 0.2)")}`,
+                          border: `1px solid ${tab.accent.replace(")", " / 0.5)")}`,
+                          color: tab.accent,
+                          boxShadow: `0 2px 10px ${tab.accent.replace(")", " / 0.2)")}`,
+                        } : {
+                          background: "oklch(0.14 0.015 260)",
+                          border: "1px solid oklch(0.22 0.02 260)",
+                          color: "oklch(0.55 0.01 260)",
+                        }}
+                      >
+                        <span>{tab.icon}</span>
+                        <span>{tab.label}</span>
+                        {count > 0 && (
+                          <span
+                            className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                            style={isActive ? {
+                              background: `${tab.accent.replace(")", " / 0.25)")}`,
+                              color: tab.accent,
+                            } : {
+                              background: "oklch(0.20 0.015 260)",
+                              color: "oklch(0.55 0.01 260)",
+                            }}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {isLoading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {[...Array(5)].map((_, i) => (
@@ -97,49 +174,59 @@ export default function HistoryGallery() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {history?.map((item, idx) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: idx * 0.04 }}
-                      className="group cursor-pointer"
-                      onClick={() => setSelected(idx)}
-                    >
-                      <div
-                        className="relative rounded-xl overflow-hidden aspect-square transition-all duration-300 group-hover:scale-105"
-                        style={{ border: "1px solid oklch(0.22 0.02 260)" }}
-                      >
-                        <img
-                          src={item.imageUrl}
-                          alt={item.characterName}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-                          style={{ background: "oklch(0.08 0.015 260 / 0.7)" }}>
-                          <span className="text-white text-xs font-semibold">View</span>
-                        </div>
-                        <div className="absolute top-2 right-2">
-                          <span className="text-xs px-1.5 py-0.5 rounded-md font-medium"
-                            style={{
-                              background: item.mode === "megaman"
-                                ? "oklch(0.65 0.22 250 / 0.85)"
-                                : "oklch(0.60 0.24 295 / 0.85)",
-                              color: "white",
-                            }}>
-                            {item.mode === "megaman" ? "⚡" : "✨"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-2">
-                        <p className="text-sm font-semibold text-foreground truncate">{item.characterName}</p>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{item.prompt.slice(0, 60)}...</p>
-                      </div>
-                    </motion.div>
-                  ))}
+              ) : filtered.length === 0 ? (
+                <div className="py-10 text-center">
+                  <p className="text-muted-foreground text-sm">No {filter === "all" ? "creations" : FILTER_TABS.find(t => t.key === filter)?.label + " creations"} yet</p>
                 </div>
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {filtered.map((item, idx) => {
+                      const badge = MODE_BADGE[item.mode] ?? MODE_BADGE.megaman;
+                      return (
+                        <motion.div
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.85 }}
+                          transition={{ duration: 0.25, delay: idx * 0.03 }}
+                          className="group cursor-pointer"
+                          onClick={() => setSelected(idx)}
+                        >
+                          <div
+                            className="relative rounded-xl overflow-hidden aspect-square transition-all duration-300 group-hover:scale-105"
+                            style={{ border: "1px solid oklch(0.22 0.02 260)" }}
+                          >
+                            <img
+                              src={item.imageUrl}
+                              alt={item.characterName}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+                              style={{ background: "oklch(0.08 0.015 260 / 0.7)" }}>
+                              <span className="text-white text-xs font-semibold">View</span>
+                            </div>
+                            <div className="absolute top-2 right-2">
+                              <span className="text-xs px-1.5 py-0.5 rounded-md font-medium"
+                                style={{
+                                  background: `${badge.accent.replace(")", " / 0.85)")}`,
+                                  color: "white",
+                                  backdropFilter: "blur(4px)",
+                                }}>
+                                {badge.icon}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-sm font-semibold text-foreground truncate">{item.characterName}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{item.prompt.slice(0, 60)}...</p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </AnimatePresence>
               )}
             </div>
           </motion.div>
@@ -171,7 +258,10 @@ export default function HistoryGallery() {
                     {selectedItem.characterName}
                   </h4>
                   <span className="text-xs text-muted-foreground">
-                    {selectedItem.mode === "megaman" ? "⚡ Mega Man Boss" : "✨ Custom Pokémon"}
+                    {(() => {
+                      const b = MODE_BADGE[selectedItem.mode] ?? MODE_BADGE.megaman;
+                      return `${b.icon} ${b.label}`;
+                    })()}
                   </span>
                 </div>
                 <button

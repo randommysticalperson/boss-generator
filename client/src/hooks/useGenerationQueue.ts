@@ -1,6 +1,33 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { nanoid } from "nanoid";
 
+const STORAGE_KEY = "characterforge_queue_v1";
+const MAX_PERSISTED_JOBS = 30;
+
+function loadPersistedJobs(): QueueJob[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as QueueJob[];
+    // On reload: reset any in-flight jobs back to pending so they can be retried
+    return parsed
+      .slice(0, MAX_PERSISTED_JOBS)
+      .map((j) => (j.status === "processing" ? { ...j, status: "pending" as QueueJobStatus } : j));
+  } catch {
+    return [];
+  }
+}
+
+function persistJobs(jobs: QueueJob[]): void {
+  try {
+    // Only persist the most recent MAX_PERSISTED_JOBS to keep storage lean
+    const toSave = jobs.slice(-MAX_PERSISTED_JOBS);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch {
+    // Silently ignore quota errors
+  }
+}
+
 export type QueueJobStatus = "pending" | "processing" | "completed" | "failed";
 
 export type QueueJobMode = "megaman" | "megamanx" | "pokemon";
@@ -46,8 +73,13 @@ export interface UseGenerationQueueReturn {
 type GenerateFn = (job: QueueJob) => Promise<{ imageUrl: string; prompt: string; characterName: string }>;
 
 export function useGenerationQueue(generateFn: GenerateFn): UseGenerationQueueReturn {
-  const [jobs, setJobs] = useState<QueueJob[]>([]);
+  const [jobs, setJobs] = useState<QueueJob[]>(() => loadPersistedJobs());
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Persist jobs to localStorage whenever they change
+  useEffect(() => {
+    persistJobs(jobs);
+  }, [jobs]);
   const processingRef = useRef(false);
   const generateFnRef = useRef(generateFn);
 

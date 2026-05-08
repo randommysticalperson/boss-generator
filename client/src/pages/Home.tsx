@@ -338,6 +338,7 @@ export default function Home() {
                       onFormChange={(data) => { megamanFormRef.current = data; }}
                       isLoading={isProcessing}
                       onAddToQueue={handleAddToQueue}
+                      onRandomizeAndGenerate={handleMegamanGenerate}
                     />
                   </motion.div>
                 )}
@@ -348,6 +349,7 @@ export default function Home() {
                       onFormChange={(data) => { megamanXFormRef.current = data; }}
                       isLoading={isProcessing}
                       onAddToQueue={handleAddToQueue}
+                      onRandomizeAndGenerate={handleMegamanXGenerate}
                     />
                   </motion.div>
                 )}
@@ -358,6 +360,7 @@ export default function Home() {
                       onFormChange={(data) => { pokemonFormRef.current = data; }}
                       isLoading={isProcessing}
                       onAddToQueue={handleAddToQueue}
+                      onRandomizeAndGenerate={handlePokemonGenerate}
                     />
                   </motion.div>
                 )}

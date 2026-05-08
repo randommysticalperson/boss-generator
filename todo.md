@@ -61,3 +61,10 @@
 - [x] Persist completed queue items linked to history gallery
 - [x] Write vitest tests for queue hook logic (15 new tests, 44 total passing)
 - [x] Save checkpoint
+
+## Three New Features
+- [x] Add "Randomize & Generate" one-click button to all three forms
+- [x] Add mode filter tabs (All / Boss / Maverick / Pokémon) to history gallery
+- [x] Persist queue state to localStorage so jobs survive page reloads
+- [x] Write/update tests for new features (18 new tests, 62 total passing)
+- [ ] Save checkpoint

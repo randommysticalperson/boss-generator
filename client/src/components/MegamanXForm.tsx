@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Shuffle } from "lucide-react";
+import { Zap, Shuffle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -91,9 +91,10 @@ interface Props {
   onFormChange?: (data: MegamanXFormData) => void;
   onAddToQueue?: () => void;
   isLoading: boolean;
+  onRandomizeAndGenerate?: (data: MegamanXFormData) => void;
 }
 
-export default function MegamanXForm({ onGenerate, onFormChange, onAddToQueue, isLoading }: Props) {
+export default function MegamanXForm({ onGenerate, onFormChange, onAddToQueue, isLoading, onRandomizeAndGenerate }: Props) {
   const [form, setForm] = useState<MegamanXFormData>({
     name: "",
     animalBase: "",
@@ -115,6 +116,17 @@ export default function MegamanXForm({ onGenerate, onFormChange, onAddToQueue, i
   useEffect(() => {
     onFormChange?.(form);
   }, [form, onFormChange]);
+
+  const handleRandomizeAndGenerate = useCallback(() => {
+    setIsRandomizing(true);
+    const randomData = randomizeMegamanX();
+    const normalized = { ...randomData, rivalry: randomData.rivalry ?? "" };
+    setForm(normalized);
+    setTimeout(() => {
+      setIsRandomizing(false);
+      onRandomizeAndGenerate?.({ ...randomData });
+    }, 400);
+  }, [onRandomizeAndGenerate]);
 
   const handleRandomize = useCallback(() => {
     setIsRandomizing(true);
@@ -392,8 +404,29 @@ export default function MegamanXForm({ onGenerate, onFormChange, onAddToQueue, i
         </Select>
       </motion.div>
 
+      {/* Randomize & Generate one-click */}
+      {onRandomizeAndGenerate && (
+        <motion.div custom={9} variants={fieldVariants} initial="hidden" animate="visible">
+          <button
+            type="button"
+            onClick={handleRandomizeAndGenerate}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 disabled:opacity-40"
+            style={{
+              background: isLoading ? undefined : "linear-gradient(135deg, oklch(0.55 0.22 185 / 0.25), oklch(0.50 0.22 220 / 0.25))",
+              border: "1px solid oklch(0.72 0.22 185 / 0.5)",
+              color: "oklch(0.85 0.18 185)",
+              boxShadow: isLoading ? undefined : "0 2px 16px oklch(0.72 0.22 185 / 0.2)",
+            }}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Randomize &amp; Generate</span>
+          </button>
+        </motion.div>
+      )}
+
       {/* Generate + Queue Buttons */}
-      <motion.div custom={9} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2 flex gap-2">
+      <motion.div custom={10} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2 flex gap-2">
         <Button
           type="submit"
           disabled={!isValid || isLoading}

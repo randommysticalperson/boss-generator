@@ -33,9 +33,10 @@ interface Props {
   onFormChange?: (data: PokemonFormData) => void;
   onAddToQueue?: () => void;
   isLoading: boolean;
+  onRandomizeAndGenerate?: (data: PokemonFormData) => void;
 }
 
-export default function PokemonForm({ onGenerate, onFormChange, onAddToQueue, isLoading }: Props) {
+export default function PokemonForm({ onGenerate, onFormChange, onAddToQueue, isLoading, onRandomizeAndGenerate }: Props) {
   const [form, setForm] = useState<PokemonFormData>({
     name: "",
     type1: "",
@@ -56,6 +57,20 @@ export default function PokemonForm({ onGenerate, onFormChange, onAddToQueue, is
   useEffect(() => {
     onFormChange?.(form);
   }, [form, onFormChange]);
+
+  const handleRandomizeAndGenerate = useCallback(() => {
+    setIsRandomizing(true);
+    const randomData = randomizePokemon();
+    setForm({ ...randomData, type2: randomData.type2 ?? "", move2: randomData.move2 ?? "" });
+    setTimeout(() => {
+      setIsRandomizing(false);
+      onRandomizeAndGenerate?.({
+        ...randomData,
+        type2: randomData.type2 || undefined,
+        move2: randomData.move2 || undefined,
+      });
+    }, 400);
+  }, [onRandomizeAndGenerate]);
 
   const handleRandomize = useCallback(() => {
     setIsRandomizing(true);
@@ -310,8 +325,29 @@ export default function PokemonForm({ onGenerate, onFormChange, onAddToQueue, is
         </div>
       </motion.div>
 
+      {/* Randomize & Generate one-click */}
+      {onRandomizeAndGenerate && (
+        <motion.div custom={7} variants={fieldVariants} initial="hidden" animate="visible">
+          <button
+            type="button"
+            onClick={handleRandomizeAndGenerate}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 disabled:opacity-40"
+            style={{
+              background: isLoading ? undefined : "linear-gradient(135deg, oklch(0.50 0.24 295 / 0.25), oklch(0.55 0.20 160 / 0.25))",
+              border: "1px solid oklch(0.60 0.24 295 / 0.5)",
+              color: "oklch(0.85 0.18 295)",
+              boxShadow: isLoading ? undefined : "0 2px 16px oklch(0.60 0.24 295 / 0.2)",
+            }}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Randomize &amp; Generate</span>
+          </button>
+        </motion.div>
+      )}
+
       {/* Generate + Queue Buttons */}
-      <motion.div custom={7} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2 flex gap-2">
+      <motion.div custom={8} variants={fieldVariants} initial="hidden" animate="visible" className="pt-2 flex gap-2">
         <Button
           type="submit"
           disabled={!isValid || isLoading}
